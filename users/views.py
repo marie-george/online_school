@@ -11,3 +11,4 @@ class UserCreateAPIView(generics.CreateAPIView):
 class UserUpdateAPIView(generics.UpdateAPIView):
     serializer_class = UserSerializer
     queryset = User.objects.all()
+
