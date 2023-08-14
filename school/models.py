@@ -20,7 +20,7 @@ class Lesson(models.Model):
 
 
 class Payment(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='пользователь')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name='пользователь')
     payment_date = models.DateField(verbose_name='дата оплаты')
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     sum = models.IntegerField(verbose_name='сумма оплаты')
