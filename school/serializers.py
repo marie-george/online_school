@@ -22,7 +22,7 @@ class CourseSerializer(serializers.ModelSerializer):
             return lessons.count()
         return 0
 
-    def get_subscribtion_status(self, instance):
+    def get_subscription_status(self, instance):
         user = self.context['request'].user.id
         sub = Subscription.objects.filter(course=instance).filter(user=user)
         if sub:
@@ -37,7 +37,8 @@ class CourseSerializer(serializers.ModelSerializer):
             'description',
             'lessons_count',
             'lessons',
-            'owner'
+            'owner',
+            'subscription_status'
         )
 
 
