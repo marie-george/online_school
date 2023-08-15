@@ -1,8 +1,8 @@
 from rest_framework import viewsets, generics, filters
 from rest_framework.permissions import IsAuthenticated
-from django.core.exceptions import PermissionDenied
 
 from school.models import Course, Lesson, Payment, Subscription
+from school.paginators import CoursePaginator, LessonPaginator
 from school.permissions import IsOwner
 from school.serializers import CourseSerializer, LessonSerializer, PaymentSerializer, SubscriptionSerializer
 from users.models import UserRoles
@@ -12,6 +12,7 @@ class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializer
     queryset = Course.objects.all()
     permission_classes = [IsAuthenticated]
+    pagination_class = CoursePaginator
 
     def perform_create(self, serializer):
         new_course = serializer.save()
@@ -58,6 +59,7 @@ class LessonListAPIView(generics.ListAPIView):
     serializer_class = LessonSerializer
     queryset = Lesson.objects.all()
     permission_classes = [IsAuthenticated]
+    pagination_class = LessonPaginator
 
     def get_queryset(self):
         user = self.request.user
