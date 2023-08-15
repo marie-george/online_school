@@ -1,11 +1,13 @@
 from rest_framework import permissions
 
+from users.models import UserRoles
+
 
 class IsModerator(permissions.BasePermission):
     message = "Вы не являетесь модератором"
 
     def has_permission(self, request, view):
-        if request.user.role == 'moderator':
+        if request.user.role == UserRoles.MODERATOR:
             return True
         return False
 
