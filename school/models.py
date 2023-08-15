@@ -1,6 +1,7 @@
 from django.db import models
 
 from config import settings
+from users.models import User
 
 NULLABLE = {'null': True, 'blank': True}
 
@@ -32,3 +33,13 @@ class Payment(models.Model):
         ('bank_transfer', 'перевод на счет'),
     )
     payment_method = models.CharField(choices=payment_methods, verbose_name='способ оплаты')
+
+
+class Subscription(models.Model):
+    status = models.BooleanField(default=True, verbose_name='статус подписки')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='пользователь')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, verbose_name='курс')
+
+    class Meta:
+        verbose_name = "подписка"
+        verbose_name_plural = "подписки"

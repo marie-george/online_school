@@ -2,9 +2,9 @@ from rest_framework import viewsets, generics, filters
 from rest_framework.permissions import IsAuthenticated
 from django.core.exceptions import PermissionDenied
 
-from school.models import Course, Lesson, Payment
+from school.models import Course, Lesson, Payment, Subscription
 from school.permissions import IsOwner
-from school.serializers import CourseSerializer, LessonSerializer, PaymentSerializer
+from school.serializers import CourseSerializer, LessonSerializer, PaymentSerializer, SubscriptionSerializer
 from users.models import UserRoles
 
 
@@ -99,4 +99,15 @@ class PaymentListAPIView(generics.ListAPIView):
 # фильтрация по способу оплаты:
 # http://localhost:8000/school/payments/?search=cash
 # http://localhost:8000/school/payments/?search=bank_transfer
+
+class SubscriptionCreateAPIView(generics.CreateAPIView):
+    serializer_class = SubscriptionSerializer
+    queryset = Subscription.objects.all()
+    permission_classes = [IsAuthenticated]
+
+
+class SubscriptionUpdateView(generics.UpdateAPIView):
+    serializer_class = SubscriptionSerializer
+    queryset = Subscription.objects.all()
+    permission_classes = [IsAuthenticated]
 
