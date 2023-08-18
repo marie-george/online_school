@@ -52,3 +52,37 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
         fields = "__all__"
+
+
+class PaymentIntentCreateSerializer(serializers.Serializer):
+    course_id = serializers.PrimaryKeyRelatedField(source='course', queryset=Course.objects.all())
+
+
+class PaymentMethodCreateSerializer(serializers.Serializer):
+    payment_intent_id = serializers.CharField(max_length=500)
+    payment_token = serializers.CharField(max_length=255)
+
+    def validate(self, value):
+        payment_intent_id = value['payment_intent_id']
+        payment = Payment.objects.get(payment_intent_id=payment_intent_id)
+        if payment is None:
+            raise serializers.ValidationError(f"Платеж с ID {payment_intent_id} не найден")
+        if payment.confirmation:
+            raise serializers.ValidationError(f"Платеж с ID {payment_intent_id} уже подтвержден")
+        return value
+
+
+class PaymentIntentConfirmSerializer(serializers.Serializer):
+    payment_intent_id = serializers.CharField(max_length=500)
+
+    def validate(self, value):
+
+        payment_intent_id = value['payment_intent_id']
+        payment = Payment.objects.get(payment_intent_id=payment_intent_id)
+        if payment is None:
+            raise serializers.ValidationError(f"Платеж с ID {payment_intent_id} не найден")
+        if payment.payment_method_id is None:
+            raise serializers.ValidationError(f"К платежу с ID {payment_intent_id} не привязан метод платежа")
+        if payment.confirmation:
+            raise serializers.ValidationError(f"Платеж с ID {payment_intent_id} уже подтвержден")
+        return value

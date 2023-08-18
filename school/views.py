@@ -1,10 +1,14 @@
-from rest_framework import viewsets, generics, filters
+from rest_framework.response import Response
+from rest_framework import viewsets, generics, filters, status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import APIException
 
 from school.models import Course, Lesson, Payment, Subscription
 from school.paginators import CoursePaginator, LessonPaginator
 from school.permissions import IsOwner
-from school.serializers import CourseSerializer, LessonSerializer, PaymentSerializer, SubscriptionSerializer
+from school.serializers import CourseSerializer, LessonSerializer, PaymentSerializer, SubscriptionSerializer, \
+    PaymentIntentCreateSerializer, PaymentMethodCreateSerializer, PaymentIntentConfirmSerializer
+from school.services import PaymentService
 from users.models import UserRoles
 
 
@@ -113,3 +117,65 @@ class SubscriptionUpdateView(generics.UpdateAPIView):
     queryset = Subscription.objects.all()
     permission_classes = [IsAuthenticated]
 
+
+class StripeServiceError(APIException):
+    status_code = 400
+    default_detail = 'Ошибка сервиса оплаты'
+    default_code = 'payment_error'
+
+
+class PaymentIntentCreateView(generics.CreateAPIView):
+    def post(self, request, *args, **kwargs):
+        serializer = PaymentIntentCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            course = serializer.validated_data['course']
+            user_id = request.user
+
+            payment_intent = PaymentService.create_payment_intent(course, user_id)
+            payment = Payment.objects.get(payment_intent_id=payment_intent['id'])
+        except StripeServiceError as e:
+            raise StripeServiceError(detail=str(e))
+
+        except Payment.DoesNotExist:
+            raise APIException(detail='Платеж не найден')
+        else:
+            data = PaymentSerializer(payment).data
+            status_code = status.HTTP_201_CREATED
+
+            return Response(data, status=status_code)
+
+
+class PaymentMethodCreateView(generics.CreateAPIView):
+
+    def post(self, request, *args, **kwargs):
+
+        serializer = PaymentMethodCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            payment_intent_id = serializer.validated_data['payment_intent_id']
+            payment_token = serializer.validated_data['payment_token']
+            try:
+                PaymentService.connection(payment_intent_id, payment_token)
+                payment = Payment.objects.get(payment_intent_id=payment_intent_id)
+                payment_serializer = PaymentSerializer(payment)
+                return Response(payment_serializer.data, status=status.HTTP_201_CREATED)
+            except Exception as error:
+                return Response({'error': str(error)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PaymentIntentConfirmView(generics.CreateAPIView):
+
+    def post(self, request, *args, **kwargs):
+
+        serializer = PaymentIntentConfirmSerializer(data=request.data)
+        if serializer.is_valid():
+            payment_intent_id = serializer.validated_data['payment_intent_id']
+            try:
+                PaymentService.confirm_payment_intent(payment_intent_id)
+                payment = Payment.objects.get(payment_intent_id=payment_intent_id)
+                payment_serializer = PaymentSerializer(payment)
+                return Response(payment_serializer.data, status=status.HTTP_201_CREATED)
+            except Exception as error:
+                return Response({"error": str(error)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
