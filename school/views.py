@@ -1,8 +1,10 @@
+from django.core.mail import send_mail
 from rest_framework.response import Response
 from rest_framework import viewsets, generics, filters, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import APIException
 
+from config import settings
 from school.models import Course, Lesson, Payment, Subscription
 from school.paginators import CoursePaginator, LessonPaginator
 from school.permissions import IsOwner
@@ -10,6 +12,7 @@ from school.serializers import CourseSerializer, LessonSerializer, PaymentSerial
     PaymentIntentCreateSerializer, PaymentMethodCreateSerializer, PaymentIntentConfirmSerializer
 from school.services import PaymentService
 from users.models import UserRoles
+from school.tasks import course_update_notification
 
 
 class CourseViewSet(viewsets.ModelViewSet):
@@ -22,6 +25,10 @@ class CourseViewSet(viewsets.ModelViewSet):
         new_course = serializer.save()
         new_course.owner = self.request.user
         new_course.save()
+
+    def perform_update(self, serializer):
+        self.object = serializer.save()
+        course_update_notification.delay(self.object.pk)
 
     def get_queryset(self):
         user = self.request.user
