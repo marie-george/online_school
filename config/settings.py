@@ -164,14 +164,19 @@ STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
 STRIPE_API_BASE_URL = 'https://api.stripe.com/v1'
 
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
-
 CELERY_RESULT_BACKEND = 'redis://localhost:6379'
-
 CELERY_TIMEZONE = "Australia/Tasmania"
-
 CELERY_TASK_TRACK_STARTED = True
-
 CELERY_TASK_TIME_LIMIT = 30 * 60
+CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+CELERY_BEAT_SCHEDULE = {
+    'task-name': {
+        'task': 'school.tasks.check_user',
+        'schedule': timedelta(minutes=1),
+    },
+}
 
 EMAIL_HOST = 'smtp.mail.ru'
 EMAIL_PORT = 2525
@@ -179,3 +184,4 @@ EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+
