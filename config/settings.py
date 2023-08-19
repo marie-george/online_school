@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'django_filters',
     'drf_yasg',
+    'django_celery_beat',
     'users',
     'school',
 ]
@@ -159,3 +160,13 @@ SIMPLE_JWT = {
 
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
 STRIPE_API_BASE_URL = 'https://api.stripe.com/v1'
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+
+CELERY_TIMEZONE = "Australia/Tasmania"
+
+CELERY_TASK_TRACK_STARTED = True
+
+CELERY_TASK_TIME_LIMIT = 30 * 60
